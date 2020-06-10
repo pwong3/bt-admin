@@ -1,0 +1,11 @@
+{
+  "targets": {
+    "besttile-a546b": {
+      "hosting": {
+        "admin": [
+          "besttilesf-admin"
+        ]
+      }
+    }
+  }
+}
