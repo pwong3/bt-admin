@@ -105,6 +105,7 @@ class ShowDuplicateModal extends Component {
             productSize: this.state.newProductSize,
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
+            productDepartment: this.props.deptPassed,
             imageUrl: this.state.newImageUrl
         })
         this.setState({ visible: false });
@@ -125,7 +126,7 @@ class ShowDuplicateModal extends Component {
         return (
             <div >
                 <Button
-                    style={{ marginBottom: 5, width: 95 }}
+                    style={{ margin: 2, width: 95 }}
                     type='primary'
                     ghost
                     onClick={() => { this.showModal() }}

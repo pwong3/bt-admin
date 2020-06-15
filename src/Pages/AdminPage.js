@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import fire from '../config/fire';
 import SelectDeptToUpdate from '../Components/SelectDeptToUpdate';
 import { Route } from 'react-router-dom';
+import HomePage from './HomePage';
 
 class AdminPage extends Component {
     constructor(props) {
@@ -31,7 +32,7 @@ class AdminPage extends Component {
             <div>
                 <br />
                 <Route path='/'>
-                    {this.state.user ? (<SelectDeptToUpdate />) : null}
+                    {this.state.user ? (<SelectDeptToUpdate />) : <HomePage/>}
                 </Route>
             </div>
         )

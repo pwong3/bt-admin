@@ -8,6 +8,7 @@ import {
     Progress,
 } from 'antd';
 import fire from '../config/fire';
+import AddImage from '../Components/AddImage';
 
 const rootRef = fire.database().ref();
 const deptRef = rootRef.child('Department');
@@ -54,7 +55,7 @@ class ShowAddNewModal extends Component {
         const deleteRef = storage.refFromURL(this.state.newImageUrl);
         deleteRef.delete()
             .then(
-                this.setState({ newImageUrl: '' }),
+                this.setState({ newImageUrl: [] }),
                 this.setState({ progressValue: 0 }))
     }
     fileHandleUpload = () => {
@@ -98,6 +99,7 @@ class ShowAddNewModal extends Component {
             productSize: this.state.newProductSize,
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
+            productDepartment: this.props.deptPassed,
             imageUrl: this.state.newImageUrl
         })
         this.setState({ visible: false });
@@ -146,7 +148,7 @@ class ShowAddNewModal extends Component {
                     Add New Product
                 </Button>
                 <Modal
-                    title='To add new product, please enter in all fields.'
+                    title='To add new product, please enter desired fields.'
                     visible={this.state.visible}
                     okText='Add'
                     okType='primary'
@@ -154,24 +156,30 @@ class ShowAddNewModal extends Component {
                     onOk={this.addOnPress}
                     onCancel={this.hideModal}
                 >
-                    {this.state.newImageUrl === '' ?
-                        <Space>
-                            <Input
-                                type='file'
-                                onChange={this.fileHandleChange}
-                                key={this.state.inputKey}
-                            >
-                            </Input>
-                            <Button onClick={this.fileHandleUpload}>Upload</Button>
-                            <div style={{ width: 120 }}>
-                                <Progress size='small' percent={this.state.progressValue} />
-                            </div>
-                        </Space>
+                    {this.state.newImageUrl.length === 0 ?
+
+                        <AddImage
+                            fileHandleChange={this.fileHandleChange}
+                            fileHandleUpload={this.fileHandleUpload}
+                            key={this.state.inputKey}
+                            percent={this.state.progressValue}
+                        />
                         :
-                        <Space>
-                            <img src={this.state.newImageUrl} alt='' height='50' />
-                            <Button danger onClick={this.deleteImage}>Delete Image</Button>
-                        </Space>
+                        <div>
+                            {this.state.newImageUrl.split(',').map(newImage => (
+                                <Space>
+                                    <img src={newImage} alt='' height='50' />
+                                    <Button danger onClick={this.deleteImage}>Delete Image</Button>
+                                </Space>
+                            ))}
+
+                            <AddImage
+                                fileHandleChange={this.fileHandleChange}
+                                fileHandleUpload={this.fileHandleUpload}
+                                key={this.state.inputKey}
+                                percent={this.state.progressValue}
+                            />
+                        </div>
                     }
                     <Input
                         placeholder='Product Series'

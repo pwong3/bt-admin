@@ -28,14 +28,7 @@ class Login extends Component {
     }
 
     onKeyPress(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            fire.auth().signInWithEmailAndPassword(this.state.email, this.state.password)
-                .catch((error) => {
-                    console.log(error);
-                });
-            return
-        }
+        if (e.key === 'Enter') {this.login(e)}
     }
 
     /*signup(e) {

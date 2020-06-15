@@ -1,20 +1,22 @@
 import React, { Component } from 'react';
-import { Space, Card, Row, Col, Select, Checkbox } from 'antd';
+import { Spin, Card, Select, Checkbox, List } from 'antd';
 import ShowUpdateModal from '../Helpers/ShowUpdateModal';
 import ShowDeleteModal from '../Helpers/ShowDeleteModal';
-import ShowAddNewModal from '../Helpers/ShowAddNewModal';
 import ShowDuplicateModal from '../Helpers/ShowDuplicateModal';
 import fire from '../config/fire';
 import './UpdateDB.css';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const rootRef = fire.database().ref()
-const deptRef = rootRef.child('Department');
+const deptRootRef = rootRef.child('Department');
 const sortBy = [
     { name: 'Product Name', sort: 'productName' },
+    { name: 'Product Model #', sort: 'productModelNumber' },
     { name: 'Product Size', sort: 'productSize' },
     { name: 'Product Color', sort: 'productColor' },
     { name: 'Recently Added', sort: '' }
 ]
+const antIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />;
 
 class UpdateDB extends Component {
     constructor(props) {
@@ -28,14 +30,15 @@ class UpdateDB extends Component {
             filteredProductsList: [],
             sortByKey: '',
             filterByKey: [],
-            filtering: false
+            filtering: false,
+            isLoaded: false
         };
     }
 
     componentDidMount() {
         const deptPassed = this.props.deptPassed;
-        const productRef = deptRef.child(deptPassed).orderByChild('sortKey');
-        productRef.on('value', (childSnapshot) => {
+        const deptRef = deptRootRef.child(deptPassed).orderByChild('sortKey');
+        deptRef.on('value', (childSnapshot) => {
             const products = [];
             childSnapshot.forEach((product) => {
                 products.push({
@@ -54,8 +57,8 @@ class UpdateDB extends Component {
                 });
                 this.setState({
                     productsList: products,
+                    isLoaded: true
                 });
-
             });
         });
     }
@@ -79,7 +82,6 @@ class UpdateDB extends Component {
                 filtering: false
             })
         }
-
     }
     filterByBrand = () => {
         const { filterByKey, productsList } = this.state;
@@ -107,15 +109,22 @@ class UpdateDB extends Component {
 
         const productsDB = filtering === false ?
             //sortByName is using copyList so the filter checkboxes don't move when sorting
-            (sortByKey === '' ? productsList : this.sortByName(sortByKey, copyList))
+            (sortByKey === '' ?
+                productsList
+                :
+                this.sortByName(sortByKey, copyList)
+            )
             :
-            (sortByKey === '' ? filteredProductsList : this.sortByName(sortByKey, filteredProductsList))
+            (sortByKey === '' ?
+                filteredProductsList
+                :
+                this.sortByName(sortByKey, filteredProductsList)
+            )
         //this.sortByName(sortByKey);
 
-        const { cardStyle, cardSpacing } = styles;
         return (
             <div >
-                <header className={'Selections'}>
+                <div className={'Selections'}>
                     <div>
                         <div>Filter by Brand:</div>
                         <Checkbox.Group
@@ -135,7 +144,7 @@ class UpdateDB extends Component {
                     <div>
                         <div>Sort By: </div>
                         <Select
-                            style={{ width: '15%' }}
+                            style={{ width: '150px' }}
                             defaultValue='Recently Added'
                             onChange={this.handleSortChange}
                         >
@@ -144,61 +153,90 @@ class UpdateDB extends Component {
                             ))}
                         </Select>
                     </div>
-                </header>
+                </div>
                 <div>
-                    <ShowAddNewModal deptPassed={this.props.deptPassed} />
-                    {productsDB.map((items) =>
-                        <div style={cardSpacing} key={items.key}>
-                            <Card
-                                style={cardStyle}
-                                title={items.productName}
-                                key={items.key}
-                                extra={
-                                    <div className={'UpdateButtons'}>
-                                        <ShowUpdateModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                        <ShowDuplicateModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                        <ShowDeleteModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                    </div>
-                                }
-                            >
-                                <Row>
-                                    <Col flex={1}>
-                                        <img src={items.imageUrl} alt='' width="350" />
-                                    </Col>
-                                    <Col flex={2}>
-                                        <div>Series: {items.productSeries}</div>
-                                        <div>Brand: {items.productBrand}</div>
-                                        <div>Model# {items.productModelNumber}</div>
-                                        <div>Material: {items.productMaterial}</div>
-                                        <div>Size: {items.productSize}</div>
-                                        <div>Color: {items.productColor}</div>
-                                        <div>Made in: {items.productMadeIn}</div>
-                                        {items.productDescription.split('\n').map((desc) => {
-                                            return (
-                                                <div key={desc} style={{ display: 'flex', flexDirection: 'row' }}>
-                                                    <div>{`\u2022`}{`\u2008`}</div>
-                                                    <div>{desc} </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </div>
-                    )}
+                    <br />
+                    {this.state.isLoaded ?
+                        (<List
+                            grid={{
+                                gutter: 16,
+                                xs: 1,
+                                sm: 2,
+                                md: 3,
+                                lg: 3,
+                                xl: 4,
+                                xxl: 4,
+                            }}
+                            dataSource={productsDB}
+                            renderItem={items => (
+                                <List.Item>
+                                    <Card
+                                        title={items.productName}
+                                        key={items.key}
+                                        extra={
+                                            <div className={'UpdateButtons'}>
+                                                <ShowUpdateModal itemPassed={items} deptPassed={this.props.deptPassed} />
+                                                <ShowDuplicateModal itemPassed={items} deptPassed={this.props.deptPassed} />
+                                                <ShowDeleteModal itemPassed={items} deptPassed={this.props.deptPassed} />
+                                            </div>
+                                        }
+                                    >
+                                        <div>
+                                            {items.imageUrl.split('/8/8/8/').map((image => (
+                                                <img
+                                                    className={'Image'}
+                                                    src={image}
+                                                    alt={image}
+                                                    key={image}
+                                                />
+                                            )))}
+
+                                            <div>Series: {items.productSeries}</div>
+                                            <div>Brand: {items.productBrand}</div>
+                                            <div>Model# {items.productModelNumber}</div>
+                                            <div>Material: {items.productMaterial}</div>
+                                            <div>Size: {items.productSize}</div>
+                                            <div>Color: {items.productColor}</div>
+                                            <div>Made in: {items.productMadeIn}</div>
+                                            {items.productDescription.split('\n').map((desc) => {
+                                                if (desc.includes('//h//')) {
+                                                    const header = desc.split('//h//')
+                                                    return (
+                                                        <div
+                                                            key={desc}
+                                                            style={{ fontWeight: 'bold' }}
+                                                        >
+                                                            {header[1]}
+                                                        </div>)
+                                                }
+                                                else if (desc.includes('//p//')) {
+                                                    const paragraph = desc.split('//p//')
+                                                    return (
+                                                        <div key={desc}>
+                                                            {paragraph[1]}
+                                                        </div>)
+                                                }
+                                                else
+                                                    return (
+                                                        <div key={desc} style={{ display: 'flex', flexDirection: 'row' }}>
+                                                            <div>{`\u2022`}{`\u2008`}</div>
+                                                            <div>{desc} </div>
+                                                        </div>
+                                                    )
+                                            })}
+                                        </div>
+                                    </Card>
+                                </List.Item>
+                            )}
+                        />)
+                        :
+                        <div style={{ textAlign: 'center' }}>
+                            <Spin indicator={antIcon} />
+                        </div>}
                 </div >
-            </div>
+            </div >
         )
     }
 }
 
-const styles = {
-    cardSpacing: {
-        paddingTop: 30,
-    },
-    cardStyle: {
-        width: 400,
-    }
-
-}
 export default UpdateDB;

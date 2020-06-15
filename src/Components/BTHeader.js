@@ -6,22 +6,17 @@ class BTHeader extends Component {
 
   render() {
     return (
-      <div>
-        <div className="Header">
-          <div className="Logo">
-            <Link to='/'>
-              <img
-                max-height='150'
-                width='auto'
-                src="BestTileLogo.jpg"
-                alt="BTLogo"
-              />
-            </Link>
-          </div>
-          <div>
-            <LoginHeader />
-          </div>
-        </div>
+      <div className="Header">
+        <Link to='/'>
+          <img
+            height='120'
+            width='auto'
+            src="BestTileLogo.jpg"
+            alt="BTLogo"
+          />
+        </Link>
+        
+        <LoginHeader />
       </div>
     )
   }

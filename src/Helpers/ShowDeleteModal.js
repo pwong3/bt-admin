@@ -62,21 +62,25 @@ class ShowDeleteConfirm extends Component {
         const item = this.props.itemPassed;
         return (
             item.imageUrl === '' ?
-                <Button
-                    style={{ width: 95 }}
-                    danger
-                    onClick={() => { this.showNoImageDeleteModal(item) }}
-                >
-                    Delete
-            </Button>
+                (<div>
+                    <Button
+                        style={{ margin: 2, width: 95 }}
+                        danger
+                        onClick={() => { this.showNoImageDeleteModal(item) }}
+                    >
+                        Delete
+                    </Button>
+                </div>)
                 :
-                <Button
-                    style={{ width: 95 }}
-                    danger
-                    onClick={() => { this.showDeleteModal(item) }}
-                >
-                    Delete
-            </Button>
+                (<div>
+                    <Button
+                        style={{ margin: 2, width: 95 }}
+                        danger
+                        onClick={() => { this.showDeleteModal(item) }}
+                    >
+                        Delete
+                    </Button>
+                </div>)
         )
     }
 }

@@ -3,7 +3,7 @@ import React from 'react';
 function Home() {
     return (
         <div>
-            Home
+            Welcome to Best Tile
         </div>
     )
 }

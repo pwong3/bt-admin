@@ -101,7 +101,7 @@ class ShowUpdateModal extends Component {
     handleChange = (e) => {
         this.setState({ [e.target.name]: e.target.value });
     }
-
+    
     updateOnPress = () => {
         const currItem = this.props.itemPassed;
         const productRef = deptRef.child(this.props.deptPassed);
@@ -115,6 +115,7 @@ class ShowUpdateModal extends Component {
             productSize: this.state.newProductSize,
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
+            productDepartment: this.props.deptPassed,
             imageUrl: this.state.newImageUrl
         })
         message.success([this.state.newProductName] + ' has been updated.')
@@ -137,7 +138,7 @@ class ShowUpdateModal extends Component {
         return (
             <div>
                 <Button
-                    style={{ marginBottom: 5, width: 95}}
+                    style={{ margin: 2, width: 95 }}
                     type='primary'
                     ghost
                     onClick={() => { this.showModal() }}
