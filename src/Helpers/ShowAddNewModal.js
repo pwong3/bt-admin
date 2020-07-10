@@ -5,10 +5,10 @@ import {
     Button,
     message,
     Space,
-    Progress,
 } from 'antd';
 import fire from '../config/fire';
 import AddImage from '../Components/AddImage';
+import noImage from '../noImage.png';
 
 const rootRef = fire.database().ref();
 const deptRef = rootRef.child('Department');
@@ -21,6 +21,10 @@ class ShowAddNewModal extends Component {
         this.addOnPress = this.addOnPress.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.setProgress = this.setProgress.bind(this);
+        this.deleteImage = this.deleteImage.bind(this);
+        this.fileHandleChange = this.fileHandleChange.bind(this);
+        this.fileHandleUpload = this.fileHandleUpload.bind(this);
+        this.clearInput = this.clearInput.bind(this);
         this.state = {
             sortKey: '',
             newProductSeries: '',
@@ -32,7 +36,12 @@ class ShowAddNewModal extends Component {
             newProductSize: '',
             newProductColor: '',
             newProductDescription: '',
-            newImageUrl: '',
+            newImageUrlArray: [
+                {
+                    url: noImage,
+                    name: 'noImage'
+                }
+            ],
             imageFile: '',
             inputKey: Date.now(),
             loading: false,
@@ -40,23 +49,38 @@ class ShowAddNewModal extends Component {
             progressValue: 0
         };
     }
-
     handleChange = (e) => {
         this.setState({ [e.target.name]: e.target.value })
     }
-
     fileHandleChange = (e) => {
         this.setState({ imageFile: e.target.files[0] });
     }
     setProgress = (progress) => {
         this.setState({ progressValue: progress });
     }
-    deleteImage = () => {
-        const deleteRef = storage.refFromURL(this.state.newImageUrl);
-        deleteRef.delete()
-            .then(
-                this.setState({ newImageUrl: [] }),
-                this.setState({ progressValue: 0 }))
+    deleteImage = (deleteIndex) => {
+        if (this.state.newImageUrlArray.length === 1) {
+            message.info('Please upload another image before deleting this one.')
+            return
+        }
+        if (this.state.newImageUrlArray[deleteIndex].url === noImage) {
+            const copy = [...this.state.newImageUrlArray]
+            copy.splice(deleteIndex, 1)
+            this.setState({
+                newImageUrlArray: copy,
+            })
+        }
+        else {
+            const copy = [...this.state.newImageUrlArray]
+            copy.splice(deleteIndex, 1)
+            const deleteRef = storage.refFromURL(this.state.newImageUrlArray[deleteIndex].url);
+            deleteRef.delete()
+                .then(
+                    this.setState({
+                        newImageUrlArray: copy,
+                        progressValue: 0
+                    }))
+        }
     }
     fileHandleUpload = () => {
         if (this.state.imageFile === '') {
@@ -80,13 +104,19 @@ class ShowAddNewModal extends Component {
                     .getDownloadURL()
                     .then(url => {
                         this.setState({
-                            newImageUrl: url,
+                            newImageUrlArray: [...this.state.newImageUrlArray, { url: url, name: this.state.imageFile.name }],
+                            progressValue: 0,
+                            inputKey: Date.now(),
                         })
-                    });
+                    })
             }
         )
     }
     addOnPress = () => {
+        //if (this.state.newImageUrlArray.length === 0) {
+        //    message.info('Please add an image first.')
+        //   return
+        // }
         const productRef = deptRef.child(this.props.deptPassed);
         productRef.push({
             sortKey: -1 * Date.now(),
@@ -100,24 +130,12 @@ class ShowAddNewModal extends Component {
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
             productDepartment: this.props.deptPassed,
-            imageUrl: this.state.newImageUrl
+            imageUrl: this.state.newImageUrlArray
         })
         this.setState({ visible: false });
         message.success([this.state.newProductName] + ' has been added.');
         this.clearInput();
     }
-    showModal = () => {
-        this.setState({
-            visible: true,
-        });
-    };
-    hideModal = () => {
-        this.setState({
-            visible: false,
-        });
-        this.clearInput();
-        this.deleteImage();
-    };
     clearInput = () => {
         this.setState({
             sortKey: '',
@@ -130,11 +148,29 @@ class ShowAddNewModal extends Component {
             newProductSize: '',
             newProductColor: '',
             newProductDescription: '',
+            newImageUrlArray: [
+                {
+                    url: noImage,
+                    name: ''
+                }
+            ],
             imageFile: null,
             inputKey: Date.now(),
             progressValue: 0
         })
     }
+    showModal = () => {
+        this.setState({
+            visible: true,
+        });
+    };
+    hideModal = () => {
+        this.setState({
+            visible: false,
+        });
+        this.clearInput();
+        //this.deleteImage();
+    };
     render() {
         const { TextArea } = Input;
         return (
@@ -156,28 +192,31 @@ class ShowAddNewModal extends Component {
                     onOk={this.addOnPress}
                     onCancel={this.hideModal}
                 >
-                    {this.state.newImageUrl.length === 0 ?
-
-                        <AddImage
-                            fileHandleChange={this.fileHandleChange}
-                            fileHandleUpload={this.fileHandleUpload}
-                            key={this.state.inputKey}
-                            percent={this.state.progressValue}
-                        />
-                        :
+                    {this.state.newImageUrlArray.length === 0 ?
                         <div>
-                            {this.state.newImageUrl.split(',').map(newImage => (
-                                <Space>
-                                    <img src={newImage} alt='' height='50' />
-                                    <Button danger onClick={this.deleteImage}>Delete Image</Button>
-                                </Space>
-                            ))}
-
                             <AddImage
                                 fileHandleChange={this.fileHandleChange}
                                 fileHandleUpload={this.fileHandleUpload}
-                                key={this.state.inputKey}
                                 percent={this.state.progressValue}
+                                inputKey={this.state.inputKey}
+                            />
+                        </div>
+                        :
+                        <div>
+                            {this.state.newImageUrlArray.map((newImage, index) => (
+                                <Space key={index} >
+                                    <div style={{ flexDirection: 'column' }}>
+                                        <img src={newImage.url} alt={newImage.name} height='50' />
+                                        <p>{newImage.name}</p>
+                                    </div>
+                                    <Button danger onClick={() => this.deleteImage(index)}>Delete Image</Button>
+                                </Space>
+                            ))}
+                            <AddImage
+                                fileHandleChange={this.fileHandleChange}
+                                fileHandleUpload={this.fileHandleUpload}
+                                percent={this.state.progressValue}
+                                inputKey={this.state.inputKey}
                             />
                         </div>
                     }

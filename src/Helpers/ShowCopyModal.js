@@ -8,12 +8,14 @@ import {
     Progress,
 } from 'antd';
 import fire from '../config/fire';
+import AddImage from '../Components/AddImage';
+import noImage from '../noImage.png';
 
 const rootRef = fire.database().ref();
 const deptRef = rootRef.child('Department');
 const storage = fire.storage();
 
-class ShowDuplicateModal extends Component {
+class ShowCopyModal extends Component {
 
     constructor(props) {
         super(props);
@@ -31,7 +33,12 @@ class ShowDuplicateModal extends Component {
             newProductSize: '',
             newProductColor: '',
             newProductDescription: '',
-            newImageUrl: '',
+            newImageUrlArray: [
+                {
+                    url: noImage,
+                    name: 'noImage'
+                }
+            ],
             imageFile: '',
             inputKey: Date.now(),
             loading: false,
@@ -86,13 +93,19 @@ class ShowDuplicateModal extends Component {
                     .getDownloadURL()
                     .then(url => {
                         this.setState({
-                            newImageUrl: url,
+                            newImageUrlArray: [...this.state.newImageUrlArray, { url: url, name: this.state.imageFile.name }],
+                            progressValue: 0,
+                            inputKey: Date.now()
                         })
                     });
             }
         )
     }
     addOnPress = () => {
+        if (this.state.newImageUrlArray.length === 0) {
+            message.info('Please add an image first.')
+            return
+        }
         const productRef = deptRef.child(this.props.deptPassed);
         productRef.push({
             sortKey: -1 * Date.now(),
@@ -106,7 +119,7 @@ class ShowDuplicateModal extends Component {
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
             productDepartment: this.props.deptPassed,
-            imageUrl: this.state.newImageUrl
+            imageUrl: this.state.newImageUrlArray
         })
         this.setState({ visible: false });
         message.success([this.state.newProductName] + ' has been added.');
@@ -142,18 +155,34 @@ class ShowDuplicateModal extends Component {
                     onOk={this.addOnPress}
                     onCancel={this.hideModal}
                 >
-                    <Space>
-                        <Input
-                            type='file'
-                            onChange={this.fileHandleChange}
-                            key={this.state.inputKey}
-                        >
-                        </Input>
-                        <Button onClick={this.fileHandleUpload}>Upload</Button>
-                        <div style={{ width: 120 }}>
-                            <Progress size='small' percent={this.state.progressValue} />
+                    {this.state.newImageUrlArray.length === 0 ?
+                        <div>
+                            <AddImage
+                                fileHandleChange={this.fileHandleChange}
+                                fileHandleUpload={this.fileHandleUpload}
+                                percent={this.state.progressValue}
+                                inputKey={this.state.inputKey}
+                            />
                         </div>
-                    </Space>
+                        :
+                        <div>
+                            {this.state.newImageUrlArray.map((newImage, index) => (
+                                <Space key={index} >
+                                    <div style={{ flexDirection: 'column' }}>
+                                        <img src={newImage.url} alt={newImage.name} height='50' />
+                                        <p>{newImage.name}</p>
+                                    </div>
+                                    <Button danger onClick={() => this.deleteImage(index)}>Delete Image</Button>
+                                </Space>
+                            ))}
+                            <AddImage
+                                fileHandleChange={this.fileHandleChange}
+                                fileHandleUpload={this.fileHandleUpload}
+                                percent={this.state.progressValue}
+                                inputKey={this.state.inputKey}
+                            />
+                        </div>
+                    }
                     <Input
                         placeholder='Product Series'
                         type='text'
@@ -233,4 +262,4 @@ class ShowDuplicateModal extends Component {
     }
 }
 
-export default ShowDuplicateModal;
+export default ShowCopyModal;

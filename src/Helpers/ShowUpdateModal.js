@@ -5,9 +5,10 @@ import {
     Button,
     Space,
     message,
-    Progress
 } from 'antd';
 import fire from '../config/fire';
+import AddImage from '../Components/AddImage';
+import noImage from '../noImage.png';
 
 const rootRef = fire.database().ref();
 const deptRef = rootRef.child('Department');
@@ -29,7 +30,7 @@ class ShowUpdateModal extends Component {
             newProductSize: '',
             newProductColor: '',
             newProductDescription: '',
-            newImageUrl: '',
+            newImageUrlArray: [],
             imageFile: '',
             loading: false,
             visible: false,
@@ -48,28 +49,51 @@ class ShowUpdateModal extends Component {
             newProductColor: currItem.productColor,
             newProductMadeIn: currItem.productMadeIn,
             newProductDescription: currItem.productDescription,
-            newImageUrl: currItem.imageUrl
+            newImageUrlArray: currItem.imageUrl
         });
     }
-    deleteImage = () => {
-        const deleteRef = storage.refFromURL(this.props.itemPassed.imageUrl);
-        const currItem = this.props.itemPassed;
-        const productRef = deptRef.child(this.props.deptPassed);
-        deleteRef.delete()
-            .then(
-                this.setState({ newImageUrl: '' }),
-                this.setState({ progressValue: 0 }))
-            .then(() =>
-                productRef.child(currItem.key).update({
-                    imageUrl: this.state.newImageUrl
-                })
-            );
+
+    handleChange = (e) => {
+        this.setState({ [e.target.name]: e.target.value });
     }
+
     fileHandleChange = (e) => {
         this.setState({ imageFile: e.target.files[0] });
     }
     setProgress = (progress) => {
         this.setState({ progressValue: progress });
+    }
+
+    deleteImage = (deleteIndex) => {
+        if (this.state.newImageUrlArray.length === 1) {
+            message.info('Please upload another image before deleting this one.')
+            return
+        }
+        if (this.state.newImageUrlArray[deleteIndex].url === noImage) {
+            const copy = [...this.state.newImageUrlArray];
+            copy.splice(deleteIndex, 1);
+            this.setState({
+                newImageUrlArray: copy,
+            })
+        }
+        else {
+            const copy = [...this.state.newImageUrlArray]
+            copy.splice(deleteIndex, 1)
+            const deleteRef = storage.refFromURL(this.props.itemPassed.imageUrl[deleteIndex].url);
+            const currItem = this.props.itemPassed;
+            const productRef = deptRef.child(this.props.deptPassed);
+            deleteRef.delete()
+                .then(
+                    this.setState({
+                        newImageUrlArray: copy,
+                        progressValue: 0
+                    }))
+                .then(() =>
+                    productRef.child(currItem.key).update({
+                        imageUrl: this.state.newImageUrlArray
+                    })
+                )
+        }
     }
     fileHandleUpload = () => {
         if (this.state.imageFile === '') {
@@ -92,17 +116,20 @@ class ShowUpdateModal extends Component {
                     .child(this.state.imageFile.name)
                     .getDownloadURL()
                     .then(url => {
-                        this.setState({ newImageUrl: url })
+                        this.setState({
+                            newImageUrlArray: [...this.state.newImageUrlArray, { url: url, name: this.state.imageFile.name }],
+                            progressValue: 0,
+                            inputKey: Date.now(),
+                        })
                     });
             }
         )
     }
-
-    handleChange = (e) => {
-        this.setState({ [e.target.name]: e.target.value });
-    }
-    
     updateOnPress = () => {
+        if (this.state.newImageUrlArray.length === 0) {
+            message.info('Please add an image first.')
+            return
+        }
         const currItem = this.props.itemPassed;
         const productRef = deptRef.child(this.props.deptPassed);
         productRef.child(currItem.key).update({
@@ -116,7 +143,7 @@ class ShowUpdateModal extends Component {
             productColor: this.state.newProductColor,
             productDescription: this.state.newProductDescription,
             productDepartment: this.props.deptPassed,
-            imageUrl: this.state.newImageUrl
+            imageUrl: this.state.newImageUrlArray
         })
         message.success([this.state.newProductName] + ' has been updated.')
         this.setState({ visible: false })
@@ -154,24 +181,34 @@ class ShowUpdateModal extends Component {
                     onOk={this.updateOnPress}
                     onCancel={this.hideModal}
                 >
-                    {currItem.imageUrl === '' ?
-                        <Space>
-                            <Input
-                                type='file'
-                                onChange={this.fileHandleChange}
-                                key={this.state.inputKey}
-                            >
-                            </Input>
-                            <Button onClick={this.fileHandleUpload}>Upload</Button>
-                            <div style={{ width: 120 }}>
-                                <Progress size='small' percent={this.state.progressValue} />
-                            </div>
-                        </Space>
+                    {currItem.imageUrl.length === 0 ?
+                        <AddImage
+                            fileHandleChange={this.fileHandleChange}
+                            fileHandleUpload={this.fileHandleUpload}
+                            percent={this.state.progressValue}
+                            inputKey={this.state.inputKey}
+                        />
                         :
-                        <Space>
-                            <img src={currItem.imageUrl} alt='' height='50' />
-                            <Button danger onClick={this.deleteImage}>Delete Image</Button>
-                        </Space>
+                        <div>
+                            {this.state.newImageUrlArray.map((image, index) => (
+                                <Space key={index}>
+                                    <div>
+                                        <img
+                                            src={image.url}
+                                            alt={image.name}
+                                            height='50' />
+                                        <p>{image.name}</p>
+                                    </div>
+                                    <Button danger onClick={() => this.deleteImage(index)}>Delete Image</Button>
+                                </Space>
+                            ))}
+                            <AddImage
+                                fileHandleChange={this.fileHandleChange}
+                                fileHandleUpload={this.fileHandleUpload}
+                                percent={this.state.progressValue}
+                                inputKey={this.state.inputKey}
+                            />
+                        </div>
                     }
                     <Input
                         placeholder={'Product Series: ' + currItem.productSeries}

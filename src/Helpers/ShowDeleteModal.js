@@ -5,6 +5,7 @@ import {
 } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import fire from '../config/fire';
+import noImage from '../noImage.png';
 
 const { confirm } = Modal;
 const storage = fire.storage();
@@ -39,7 +40,6 @@ class ShowDeleteConfirm extends Component {
         const rootRef = fire.database().ref();
         const deptRef = rootRef.child('Department');
         const productRef = deptRef.child(this.props.deptPassed);
-        const deleteRef = storage.refFromURL(this.props.itemPassed.imageUrl);
 
         confirm({
             title: 'Are you sure you want to delete this product?',
@@ -49,8 +49,11 @@ class ShowDeleteConfirm extends Component {
             okType: 'danger',
             cancelText: 'No',
             onOk() {
+                item.imageUrl.map((image) => (
+                    storage.refFromURL(image.url).delete()
+                ))
                 productRef.child(item.key).remove();
-                deleteRef.delete();
+
             },
             onCancel() {
                 console.log('Cancel');
@@ -61,7 +64,7 @@ class ShowDeleteConfirm extends Component {
     render() {
         const item = this.props.itemPassed;
         return (
-            item.imageUrl === '' ?
+            item.imageUrl[0].url === "/static/media/noImage.c0c008e2.png" ?
                 (<div>
                     <Button
                         style={{ margin: 2, width: 95 }}

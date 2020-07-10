@@ -1,15 +1,14 @@
-import React, { Component } from 'react';
-import { Spin, Card, Select, Checkbox, List } from 'antd';
-import ShowUpdateModal from '../Helpers/ShowUpdateModal';
-import ShowDeleteModal from '../Helpers/ShowDeleteModal';
-import ShowDuplicateModal from '../Helpers/ShowDuplicateModal';
+import React, { PureComponent } from 'react';
+import { Spin, Select, Checkbox, List, Button, Input } from 'antd';
 import fire from '../config/fire';
 import './UpdateDB.css';
 import { LoadingOutlined } from '@ant-design/icons';
+import ItemCard from '../Components/ItemCard'
 
 const rootRef = fire.database().ref()
 const deptRootRef = rootRef.child('Department');
-const sortBy = [
+const sortByDropDownList = [
+    { name: 'Product Brand', sort: 'productBrand' },
     { name: 'Product Name', sort: 'productName' },
     { name: 'Product Model #', sort: 'productModelNumber' },
     { name: 'Product Size', sort: 'productSize' },
@@ -18,49 +17,87 @@ const sortBy = [
 ]
 const antIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />;
 
-class UpdateDB extends Component {
+class UpdateDB extends PureComponent {
     constructor(props) {
         super(props);
+        this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleSortChange = this.handleSortChange.bind(this);
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
         this.filterByBrand = this.filterByBrand.bind(this);
         this.sortByName = this.sortByName.bind(this);
+
         this.state = {
             productsList: [],
             filteredProductsList: [],
+            searchedProductsList: [],
+            sortedProductsList: [],
+            searchValue: '',
             sortByKey: '',
             filterByKey: [],
+            searching: false,
+            sorting: false,
             filtering: false,
-            isLoaded: false
+            isLoading: true,
+            loadingMore: false,
+            lastLoadedItem: '',
+            moreToLoad: true
         };
     }
 
-    componentDidMount() {
+    loadData() {
         const deptPassed = this.props.deptPassed;
-        const deptRef = deptRootRef.child(deptPassed).orderByChild('sortKey');
+        const deptRef = deptRootRef.child(deptPassed)
+            .orderByChild('sortKey')
         deptRef.on('value', (childSnapshot) => {
             const products = [];
             childSnapshot.forEach((product) => {
-                products.push({
-                    key: product.key,
-                    productSeries: product.val().productSeries,
-                    productBrand: product.val().productBrand,
-                    productName: product.val().productName,
-                    productModelNumber: product.val().productModelNumber,
-                    productMaterial: product.val().productMaterial,
-                    //      productPrice: product.toJSON().productPrice,
-                    productMadeIn: product.val().productMadeIn,
-                    productSize: product.val().productSize,
-                    productColor: product.val().productColor,
-                    productDescription: product.val().productDescription,
-                    imageUrl: product.val().imageUrl,
-                });
+                products.push(product.val());
                 this.setState({
                     productsList: products,
-                    isLoaded: true
+                    isLoading: false,
+                    lastLoadedItem: product.val().sortKey
                 });
             });
         });
+    }
+    loadMore() {
+        this.setState({ loadingMore: true })
+        const deptPassed = this.props.deptPassed;
+        const deptRef = deptRootRef.child(deptPassed)
+            .orderByChild('sortKey')
+            .startAt(this.state.lastLoadedItem)
+            .limitToFirst(41);
+        deptRef.on('value', (childSnapshot) => {
+            const products = this.state.productsList;
+            products.pop();
+            childSnapshot.forEach((product) => {
+                products.push(product.val());
+                this.setState({
+                    productsList: products,
+                    isLoading: false,
+                    loadingMore: false,
+                    lastLoadedItem: product.val().sortKey
+                });
+            });
+        });
+    }
+    componentDidMount() {
+        this.loadData();
+    }
+
+    handleSearchChange = (e) => {
+        if (this.state.searchValue === '') {
+            this.setState({
+                searching: false,
+            })
+        }
+        this.setState({
+            [e.target.name]: e.target.value,
+            searching: true,
+            searchedProductsList: []
+        },
+            () => this.filterBySearch()
+        )
     }
     handleSortChange = (value) => {
         this.setState({ sortByKey: value })
@@ -83,15 +120,29 @@ class UpdateDB extends Component {
             })
         }
     }
+    filterBySearch = () => {
+        const { productsList } = this.state;
+        const copyProdList = productsList;
+        const searchList = copyProdList.filter(prod => prod.productName.toLowerCase().includes(this.state.searchValue.toLowerCase()))
+        this.setState({ searchedProductsList: searchList })
+    }
     filterByBrand = () => {
-        const { filterByKey, productsList } = this.state;
+        const { filterByKey, productsList, searching, searchedProductsList } = this.state;
         const tempProdList = [];
-        filterByKey.forEach((filter) => {
-            const eachFilterProdList = productsList.filter(prod => prod.productBrand === filter);
-            eachFilterProdList.forEach((item) =>
-                tempProdList.push(item)
-            )
-        })
+        searching === true ?
+            filterByKey.forEach((filter) => {
+                const eachFilterProdList = searchedProductsList.filter(prod => prod.productBrand === filter);
+                eachFilterProdList.forEach((item) =>
+                    tempProdList.push(item)
+                )
+            })
+            :
+            filterByKey.forEach((filter) => {
+                const eachFilterProdList = productsList.filter(prod => prod.productBrand === filter);
+                eachFilterProdList.forEach((item) =>
+                    tempProdList.push(item)
+                )
+            })
         this.setState({ filteredProductsList: tempProdList })
     }
     sortByName = (sort, list) => {
@@ -101,36 +152,77 @@ class UpdateDB extends Component {
     }
     render() {
         const { Option } = Select;
-        const { productsList, filtering, sortByKey, filteredProductsList } = this.state;
-        const copyList = [...productsList]
+        const {
+            productsList,
+            filtering,
+            sortByKey,
+            filteredProductsList,
+            searching,
+            searchedProductsList,
+            sortedProductsList
+        } = this.state;
+        const copyProductsList = [...productsList]
+        const copySearchedList = [...searchedProductsList]
         //get all unique brands
-        const filterBy = [...new Set(productsList.map(prod => prod.productBrand))].sort((a, b) =>
-            (a.toLowerCase() > b.toLowerCase()) ? 1 : -1);
+        const filterByBrandList = searching === true ?
+            [...new Set(searchedProductsList.map(prod => prod.productBrand))].sort((a, b) =>
+                (a.toLowerCase() > b.toLowerCase()) ? 1 : -1)
+            :
+            [...new Set(productsList.map(prod => prod.productBrand))].sort((a, b) =>
+                (a.toLowerCase() > b.toLowerCase()) ? 1 : -1)
 
-        const productsDB = filtering === false ?
-            //sortByName is using copyList so the filter checkboxes don't move when sorting
-            (sortByKey === '' ?
-                productsList
+        const productsDB = searching === true ?
+            //search true
+            (filtering === false ?
+                //sortByName is using copyList so the filter checkboxes don't move when sorting
+                (sortByKey === '' ?
+                    searchedProductsList
+                    :
+                    this.sortByName(sortByKey, copySearchedList)
+                )
                 :
-                this.sortByName(sortByKey, copyList)
+                (sortByKey === '' ?
+                    filteredProductsList
+                    :
+                    this.sortByName(sortByKey, filteredProductsList)
+                )
             )
             :
-            (sortByKey === '' ?
-                filteredProductsList
+            //search false
+            (filtering === false ?
+                //sortByName is using copyList so the filter checkboxes don't move when sorting
+                (sortByKey === '' ?
+                    productsList
+                    :
+                    this.sortByName(sortByKey, copyProductsList)
+                )
                 :
-                this.sortByName(sortByKey, filteredProductsList)
+                (sortByKey === '' ?
+                    filteredProductsList
+                    :
+                    this.sortByName(sortByKey, filteredProductsList)
+                )
             )
-        //this.sortByName(sortByKey);
-
         return (
             <div >
+                <div>
+                    <div style={{ marginTop: 15 }}>Search</div>
+                    <Input
+                        style={{ width: 321, }}
+                        name='searchValue'
+                        type='text'
+                        placeholder='Enter name of product'
+                        onChange={this.handleSearchChange}
+                        value={this.state.searchValue}
+                    />
+                </div>
                 <div className={'Selections'}>
                     <div>
                         <div>Filter by Brand:</div>
                         <Checkbox.Group
                             onChange={this.handleCheckedChange}
                         >
-                            {filterBy.map(filter => (
+                            {filterByBrandList.map(filter => (
                                 <Checkbox
                                     key={filter}
                                     label={filter}
@@ -148,7 +240,7 @@ class UpdateDB extends Component {
                             defaultValue='Recently Added'
                             onChange={this.handleSortChange}
                         >
-                            {sortBy.map(sort => (
+                            {sortByDropDownList.map(sort => (
                                 <Option key={sort.name} value={sort.sort}>{sort.name}</Option>
                             ))}
                         </Select>
@@ -156,83 +248,39 @@ class UpdateDB extends Component {
                 </div>
                 <div>
                     <br />
-                    {this.state.isLoaded ?
-                        (<List
-                            grid={{
-                                gutter: 16,
-                                xs: 1,
-                                sm: 2,
-                                md: 3,
-                                lg: 3,
-                                xl: 4,
-                                xxl: 4,
-                            }}
-                            dataSource={productsDB}
-                            renderItem={items => (
-                                <List.Item>
-                                    <Card
-                                        title={items.productName}
-                                        key={items.key}
-                                        extra={
-                                            <div className={'UpdateButtons'}>
-                                                <ShowUpdateModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                                <ShowDuplicateModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                                <ShowDeleteModal itemPassed={items} deptPassed={this.props.deptPassed} />
-                                            </div>
-                                        }
-                                    >
-                                        <div>
-                                            {items.imageUrl.split('/8/8/8/').map((image => (
-                                                <img
-                                                    className={'Image'}
-                                                    src={image}
-                                                    alt={image}
-                                                    key={image}
-                                                />
-                                            )))}
-
-                                            <div>Series: {items.productSeries}</div>
-                                            <div>Brand: {items.productBrand}</div>
-                                            <div>Model# {items.productModelNumber}</div>
-                                            <div>Material: {items.productMaterial}</div>
-                                            <div>Size: {items.productSize}</div>
-                                            <div>Color: {items.productColor}</div>
-                                            <div>Made in: {items.productMadeIn}</div>
-                                            {items.productDescription.split('\n').map((desc) => {
-                                                if (desc.includes('//h//')) {
-                                                    const header = desc.split('//h//')
-                                                    return (
-                                                        <div
-                                                            key={desc}
-                                                            style={{ fontWeight: 'bold' }}
-                                                        >
-                                                            {header[1]}
-                                                        </div>)
-                                                }
-                                                else if (desc.includes('//p//')) {
-                                                    const paragraph = desc.split('//p//')
-                                                    return (
-                                                        <div key={desc}>
-                                                            {paragraph[1]}
-                                                        </div>)
-                                                }
-                                                else
-                                                    return (
-                                                        <div key={desc} style={{ display: 'flex', flexDirection: 'row' }}>
-                                                            <div>{`\u2022`}{`\u2008`}</div>
-                                                            <div>{desc} </div>
-                                                        </div>
-                                                    )
-                                            })}
-                                        </div>
-                                    </Card>
-                                </List.Item>
-                            )}
-                        />)
-                        :
+                    {this.state.isLoading ?
                         <div style={{ textAlign: 'center' }}>
                             <Spin indicator={antIcon} />
-                        </div>}
+                        </div>
+                        :
+                        (<div>
+                            <List
+                                grid={{
+                                    gutter: 16,
+                                    xs: 1,
+                                    sm: 2,
+                                    md: 3,
+                                    lg: 3,
+                                    xl: 4,
+                                    xxl: 4,
+                                }}
+                                dataSource={productsDB}
+                                renderItem={items => (
+                                    <List.Item>
+                                        <ItemCard items={items} deptPassed={this.props.deptPassed} />
+                                    </List.Item>
+                                )}
+                            />
+                            {/* <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                {this.state.loadingMore ?
+                                    <Spin indicator={antIcon} />
+                                    :
+                                    <Button onClick={() => this.loadMore()}>Load More</Button>
+                                }
+                            </div> */}
+                        </div>
+                        )
+                    }
                 </div >
             </div >
         )
