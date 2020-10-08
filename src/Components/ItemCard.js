@@ -6,7 +6,7 @@ import ShowCopyModal from '../Helpers/ShowCopyModal';
 
 class ItemCard extends PureComponent {
     render() {
-        const items = this.props.items;
+        const items = this.props.itemPassed;
         const deptPassed = this.props.deptPassed;
         return (
             <Card
@@ -29,14 +29,16 @@ class ItemCard extends PureComponent {
                             alt={image.name}
                         />
                     )))}
-
                     <div>Series: {items.productSeries}</div>
                     <div>Brand: {items.productBrand}</div>
                     <div>Model# {items.productModelNumber}</div>
                     <div>Material: {items.productMaterial}</div>
                     <div>Size: {items.productSize}</div>
+                    <div>Product Width: {items.productWidth}</div>
+                    <div>Product Length/Depth: {items.productLength}</div>
                     <div>Color: {items.productColor}</div>
                     <div>Made in: {items.productMadeIn}</div>
+                    <div>Search keywords: {items.searchKeywords}</div>
                     {items.productDescription.split('\n').map((desc) => {
                         if (desc.includes('//h//')) {
                             const header = desc.split('//h//')
@@ -58,7 +60,8 @@ class ItemCard extends PureComponent {
                         else
                             return (
                                 <div key={desc} style={{ display: 'flex', flexDirection: 'row' }}>
-                                    <div>{`\u2022`}{`\u2008`}</div>
+                                    {/*2022 bulletpoint 2008 space */}
+                                    <div>{`\u2022`}{`\u2008`}</div> 
                                     <div>{desc} </div>
                                 </div>
                             )

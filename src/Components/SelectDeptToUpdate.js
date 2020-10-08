@@ -4,7 +4,9 @@ import {
 } from 'antd';
 import UpdateDB from './UpdateDB';
 import ShowAddNewModal from '../Helpers/ShowAddNewModal';
-import { Route, withRouter } from 'react-router-dom';
+import { Route, withRouter, Switch, NavLink } from 'react-router-dom';
+import NoMatchPage from '../Pages/NoMatchPage';
+import HomePage from '../Pages/HomePage';
 
 const deptsList = [
     'Accessories',
@@ -31,10 +33,10 @@ class SelectMenu extends Component {
             dept: ''
         }
     }
-    
+
     handleChange = (value) => {
         this.props.history.push(`/${value}`);
-        this.setState({dept: value})
+        this.setState({ dept: value })
     }
     render() {
         const { Option } = Select;
@@ -45,7 +47,7 @@ class SelectMenu extends Component {
                     flexDirection: 'row'
                 }}
             >
-                <div style={{marginRight: 10}}>
+                <div style={{ marginRight: 10 }}>
                     <div>Select a department.</div>
                     <Select
                         style={{ width: '170px' }}
@@ -53,7 +55,11 @@ class SelectMenu extends Component {
                         onChange={this.handleChange}
                     >
                         {deptsList.map(dept => (
-                            <Option key={dept} value={dept}>{dept}</Option>
+                            <Option key={dept} value={dept}>
+                                <NavLink to={dept} >
+                                    {dept}
+                                </NavLink>
+                            </Option>
                         ))}
                     </Select>
                 </div>
@@ -70,13 +76,21 @@ function SelectDeptToUpdate() {
     return (
         <div>
             <Menu />
-            {deptsList.map(dept => (
-                <Route
-                    key={dept}
-                    path={`/${dept}`}
-                    render={() => <UpdateDB deptPassed={dept} />}
-                />
-            ))}
+            <Switch>
+                {deptsList.map(dept => (
+                    <Route
+                        key={dept}
+                        path={`/${dept}`}
+                        render={() => <UpdateDB deptPassed={dept} />}
+                    />
+                ))}
+                <Route exact path={'/'}>
+                    <HomePage />
+                </Route>
+                <Route>
+                    <NoMatchPage />
+                </Route>
+            </Switch>
         </div>
     );
 }

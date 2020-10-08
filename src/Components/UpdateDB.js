@@ -1,21 +1,21 @@
 import React, { PureComponent } from 'react';
-import { Spin, Select, Checkbox, List, Button, Input } from 'antd';
+import { Spin, Select, Checkbox, List, Button, Input, message } from 'antd';
 import fire from '../config/fire';
 import './UpdateDB.css';
 import { LoadingOutlined } from '@ant-design/icons';
 import ItemCard from '../Components/ItemCard'
 
 const rootRef = fire.database().ref()
-const deptRootRef = rootRef.child('Department');
+const deptRef = rootRef.child('Department');
 const sortByDropDownList = [
-    { name: 'Product Brand', sort: 'productBrand' },
-    { name: 'Product Name', sort: 'productName' },
-    { name: 'Product Model #', sort: 'productModelNumber' },
-    { name: 'Product Size', sort: 'productSize' },
-    { name: 'Product Color', sort: 'productColor' },
-    { name: 'Recently Added', sort: '' }
+    { name: 'Product Brand', property: 'productBrand' },
+    { name: 'Product Name', property: 'productName' },
+    { name: 'Product Model #', property: 'productModelNumber' },
+    { name: 'Product Size', property: 'productWidth' },
+    { name: 'Product Color', property: 'productColor' },
+    { name: 'Recently Added', property: '' }
 ]
-const antIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />;
+const antIcon = <LoadingOutlined style={{ fontSize: 40, color: 'red' }} spin />;
 
 class UpdateDB extends PureComponent {
     constructor(props) {
@@ -32,7 +32,7 @@ class UpdateDB extends PureComponent {
             searchedProductsList: [],
             sortedProductsList: [],
             searchValue: '',
-            sortByKey: '',
+            sortByProperty: '',
             filterByKey: [],
             searching: false,
             sorting: false,
@@ -46,12 +46,28 @@ class UpdateDB extends PureComponent {
 
     loadData() {
         const deptPassed = this.props.deptPassed;
-        const deptRef = deptRootRef.child(deptPassed)
+        const productRef = deptRef.child(deptPassed)
             .orderByChild('sortKey')
-        deptRef.on('value', (childSnapshot) => {
+        productRef.on('value', (childSnapshot) => {
             const products = [];
             childSnapshot.forEach((product) => {
-                products.push(product.val());
+                products.push({
+                    key: product.key,
+                    productSeries: product.val().productSeries,
+                    productBrand: product.val().productBrand,
+                    productName: product.val().productName,
+                    productModelNumber: product.val().productModelNumber,
+                    productMaterial: product.val().productMaterial,
+                    productMadeIn: product.val().productMadeIn,
+                    productSize: product.val().productSize,
+                    productWidth: product.val().productWidth,
+                    productLength: product.val().productLength,
+                    productColor: product.val().productColor,
+                    productDescription: product.val().productDescription,
+                    productDepartment: product.val().productDepartment,
+                    imageUrl: product.val().imageUrl,
+                    searchKeywords: product.val().searchKeywords,
+                });
                 this.setState({
                     productsList: products,
                     isLoading: false,
@@ -60,27 +76,7 @@ class UpdateDB extends PureComponent {
             });
         });
     }
-    loadMore() {
-        this.setState({ loadingMore: true })
-        const deptPassed = this.props.deptPassed;
-        const deptRef = deptRootRef.child(deptPassed)
-            .orderByChild('sortKey')
-            .startAt(this.state.lastLoadedItem)
-            .limitToFirst(41);
-        deptRef.on('value', (childSnapshot) => {
-            const products = this.state.productsList;
-            products.pop();
-            childSnapshot.forEach((product) => {
-                products.push(product.val());
-                this.setState({
-                    productsList: products,
-                    isLoading: false,
-                    loadingMore: false,
-                    lastLoadedItem: product.val().sortKey
-                });
-            });
-        });
-    }
+
     componentDidMount() {
         this.loadData();
     }
@@ -100,7 +96,7 @@ class UpdateDB extends PureComponent {
         )
     }
     handleSortChange = (value) => {
-        this.setState({ sortByKey: value })
+        this.setState({ sortByProperty: value })
     }
     handleCheckedChange = (checkedValues) => {
         if (checkedValues.length > 0) {
@@ -145,23 +141,49 @@ class UpdateDB extends PureComponent {
             })
         this.setState({ filteredProductsList: tempProdList })
     }
-    sortByName = (sort, list) => {
-        const sortProdList = list;
-        return sortProdList.sort((a, b) =>
-            (a[sort].toLowerCase() > b[sort].toLowerCase()) ? 1 : -1)
+    //sort by dropdown
+    sortByName = (sortProperty, list) => {
+        if (sortProperty === 'productWidth') {
+            return list.sort((a, b) =>
+                (a[sortProperty] > b[sortProperty]) ? 1 : -1)
+        } else {
+            return list.sort((a, b) =>
+                (a[sortProperty].toLowerCase() > b[sortProperty].toLowerCase()) ? 1 : -1)
+        }
     }
+
+    //used to add productWidth and productLength to existing products
+    updateDatabase = () => {
+        const db = this.state.productsList;
+        const productRef = deptRef.child(this.props.deptPassed);
+        db.forEach((item) => {
+            let keywords = '';
+            console.log(item.productBrand.toLowerCase())
+            keywords = keywords.concat(item.productBrand.toLowerCase())
+                .concat(', ', item.productDepartment.toLowerCase())
+                .concat(', ', item.productMaterial.toLowerCase())
+                .concat(', ', item.productColor.toLowerCase())
+                .concat(', ', item.productModelNumber.toLowerCase())
+            console.log(keywords)
+            productRef.child(item.key).update({
+                searchKeywords: keywords,
+            })
+
+            message.success(item.productName + 'updated')
+        })
+    }
+
     render() {
         const { Option } = Select;
         const {
             productsList,
             filtering,
-            sortByKey,
+            sortByProperty,
             filteredProductsList,
             searching,
             searchedProductsList,
-            sortedProductsList
         } = this.state;
-        const copyProductsList = [...productsList]
+        const copyProductsList = [...productsList]//clones array
         const copySearchedList = [...searchedProductsList]
         //get all unique brands
         const filterByBrandList = searching === true ?
@@ -175,32 +197,32 @@ class UpdateDB extends PureComponent {
             //search true
             (filtering === false ?
                 //sortByName is using copyList so the filter checkboxes don't move when sorting
-                (sortByKey === '' ?
+                (sortByProperty === '' ?
                     searchedProductsList
                     :
-                    this.sortByName(sortByKey, copySearchedList)
+                    this.sortByName(sortByProperty, copySearchedList)
                 )
                 :
-                (sortByKey === '' ?
+                (sortByProperty === '' ?
                     filteredProductsList
                     :
-                    this.sortByName(sortByKey, filteredProductsList)
+                    this.sortByName(sortByProperty, filteredProductsList)
                 )
             )
             :
             //search false
             (filtering === false ?
                 //sortByName is using copyList so the filter checkboxes don't move when sorting
-                (sortByKey === '' ?
+                (sortByProperty === '' ?
                     productsList
                     :
-                    this.sortByName(sortByKey, copyProductsList)
+                    this.sortByName(sortByProperty, copyProductsList)
                 )
                 :
-                (sortByKey === '' ?
+                (sortByProperty === '' ?
                     filteredProductsList
                     :
-                    this.sortByName(sortByKey, filteredProductsList)
+                    this.sortByName(sortByProperty, filteredProductsList)
                 )
             )
         return (
@@ -240,14 +262,21 @@ class UpdateDB extends PureComponent {
                             defaultValue='Recently Added'
                             onChange={this.handleSortChange}
                         >
-                            {sortByDropDownList.map(sort => (
-                                <Option key={sort.name} value={sort.sort}>{sort.name}</Option>
+                            {sortByDropDownList.map(sortBy => (
+                                <Option key={sortBy.name} value={sortBy.property}>{sortBy.name}</Option>
                             ))}
                         </Select>
                     </div>
                 </div>
                 <div>
                     <br />
+                    <div>
+                        <Button
+                            type='primary'
+                            onClick={this.updateDatabase}>
+                            update database
+                        </Button>
+                    </div>
                     {this.state.isLoading ?
                         <div style={{ textAlign: 'center' }}>
                             <Spin indicator={antIcon} />
@@ -267,7 +296,7 @@ class UpdateDB extends PureComponent {
                                 dataSource={productsDB}
                                 renderItem={items => (
                                     <List.Item>
-                                        <ItemCard items={items} deptPassed={this.props.deptPassed} />
+                                        <ItemCard itemPassed={items} deptPassed={this.props.deptPassed} />
                                     </List.Item>
                                 )}
                             />

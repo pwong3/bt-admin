@@ -66,6 +66,7 @@ class ShowDeleteConfirm extends Component {
         return (
             item.imageUrl[0].url === "/static/media/noImage.c0c008e2.png" ?
                 (<div>
+                    {console.log('this is noimage')}
                     <Button
                         style={{ margin: 2, width: 95 }}
                         danger
@@ -73,7 +74,8 @@ class ShowDeleteConfirm extends Component {
                     >
                         Delete
                     </Button>
-                </div>)
+                </div>
+                )
                 :
                 (<div>
                     <Button
@@ -83,7 +85,8 @@ class ShowDeleteConfirm extends Component {
                     >
                         Delete
                     </Button>
-                </div>)
+                </div>
+                )
         )
     }
 }

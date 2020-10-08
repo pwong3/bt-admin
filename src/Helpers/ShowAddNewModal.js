@@ -34,8 +34,11 @@ class ShowAddNewModal extends Component {
             newProductMaterial: '',
             newProductMadeIn: '',
             newProductSize: '',
+            newProductWidth: '',
+            newProductLength: '',
             newProductColor: '',
             newProductDescription: '',
+            newSearchKeywords: '',
             newImageUrlArray: [
                 {
                     url: noImage,
@@ -117,24 +120,31 @@ class ShowAddNewModal extends Component {
         //    message.info('Please add an image first.')
         //   return
         // }
-        const productRef = deptRef.child(this.props.deptPassed);
-        productRef.push({
-            sortKey: -1 * Date.now(),
-            productSeries: this.state.newProductSeries,
-            productBrand: this.state.newProductBrand,
-            productName: this.state.newProductName,
-            productModelNumber: this.state.newProductModelNumber,
-            productMaterial: this.state.newProductMaterial,
-            productMadeIn: this.state.newProductMadeIn,
-            productSize: this.state.newProductSize,
-            productColor: this.state.newProductColor,
-            productDescription: this.state.newProductDescription,
-            productDepartment: this.props.deptPassed,
-            imageUrl: this.state.newImageUrlArray
-        })
-        this.setState({ visible: false });
-        message.success([this.state.newProductName] + ' has been added.');
-        this.clearInput();
+        try {
+            const productRef = deptRef.child(this.props.deptPassed);
+            productRef.push({
+                sortKey: -1 * Date.now(),
+                productSeries: this.state.newProductSeries,
+                productBrand: this.state.newProductBrand,
+                productName: this.state.newProductName,
+                productModelNumber: this.state.newProductModelNumber,
+                productMaterial: this.state.newProductMaterial,
+                productMadeIn: this.state.newProductMadeIn,
+                productSize: this.state.newProductSize,
+                productWidth: this.state.newProductWidth === '' ? '' : parseFloat(this.state.newProductWidth),
+                productLength: this.state.newProductLength === '' ? '' : parseFloat(this.state.newProductLength),
+                productColor: this.state.newProductColor,
+                productDescription: this.state.newProductDescription,
+                productDepartment: this.props.deptPassed,
+                imageUrl: this.state.newImageUrlArray,
+                searchKeywords: this.state.newSearchKeywords,
+            })
+            this.setState({ visible: false });
+            message.success([this.state.newProductName] + ' has been added.');
+            this.clearInput();
+        } catch {
+            message.error('Please select department first.')
+        }
     }
     clearInput = () => {
         this.setState({
@@ -146,8 +156,11 @@ class ShowAddNewModal extends Component {
             newProductMaterial: '',
             newProductMadeIn: '',
             newProductSize: '',
+            newProductWidth: '',
+            newProductLength: '',
             newProductColor: '',
             newProductDescription: '',
+            newSearchKeywords: '',
             newImageUrlArray: [
                 {
                     url: noImage,
@@ -269,6 +282,22 @@ class ShowAddNewModal extends Component {
                         onChange={this.handleChange}
                     />
                     <Input
+                        placeholder='Product Width (numbers 0-9 only)'
+                        type='text'
+                        name='newProductWidth'
+                        size='medium'
+                        value={this.state.newProductWidth}
+                        onChange={this.handleChange}
+                    />
+                    <Input
+                        placeholder='Product Length/Depth (numbers 0-9 only)'
+                        type='text'
+                        name='newProductLength'
+                        size='medium'
+                        value={this.state.newProductLength}
+                        onChange={this.handleChange}
+                    />
+                    <Input
                         placeholder='Product Color'
                         type='text'
                         name='newProductColor'
@@ -282,6 +311,14 @@ class ShowAddNewModal extends Component {
                         name='newProductMadeIn'
                         size='medium'
                         value={this.state.newProductMadeIn}
+                        onChange={this.handleChange}
+                    />
+                    <Input
+                        placeholder={'Search Keywords'}
+                        type='text'
+                        name='newSearchKeywords'
+                        size='medium'
+                        value={this.state.newSearchKeywords}
                         onChange={this.handleChange}
                     />
                     <TextArea

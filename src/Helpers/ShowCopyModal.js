@@ -31,8 +31,11 @@ class ShowCopyModal extends Component {
             newProductMaterial: '',
             newProductMadeIn: '',
             newProductSize: '',
+            newProductWidth: '',
+            newProductLength: '',
             newProductColor: '',
             newProductDescription: '',
+            newSearchKeywords: '',
             newImageUrlArray: [
                 {
                     url: noImage,
@@ -56,9 +59,12 @@ class ShowCopyModal extends Component {
             newProductModelNumber: currItem.productModelNumber,
             newProductMaterial: currItem.productMaterial,
             newProductSize: currItem.productSize,
+            newProductWidth: currItem.productWidth,
+            newProductLength: currItem.productLength,
             newProductColor: currItem.productColor,
             newProductMadeIn: currItem.productMadeIn,
             newProductDescription: currItem.productDescription,
+            newSearchKeywords: currItem.searchKeywords,
         });
     }
     handleChange = (e) => {
@@ -106,23 +112,30 @@ class ShowCopyModal extends Component {
             message.info('Please add an image first.')
             return
         }
-        const productRef = deptRef.child(this.props.deptPassed);
-        productRef.push({
-            sortKey: -1 * Date.now(),
-            productSeries: this.state.newProductSeries,
-            productBrand: this.state.newProductBrand,
-            productName: this.state.newProductName,
-            productModelNumber: this.state.newProductModelNumber,
-            productMaterial: this.state.newProductMaterial,
-            productMadeIn: this.state.newProductMadeIn,
-            productSize: this.state.newProductSize,
-            productColor: this.state.newProductColor,
-            productDescription: this.state.newProductDescription,
-            productDepartment: this.props.deptPassed,
-            imageUrl: this.state.newImageUrlArray
-        })
-        this.setState({ visible: false });
-        message.success([this.state.newProductName] + ' has been added.');
+        try{
+            const productRef = deptRef.child(this.props.deptPassed);
+            productRef.push({
+                sortKey: -1 * Date.now(),
+                productSeries: this.state.newProductSeries,
+                productBrand: this.state.newProductBrand,
+                productName: this.state.newProductName,
+                productModelNumber: this.state.newProductModelNumber,
+                productMaterial: this.state.newProductMaterial,
+                productMadeIn: this.state.newProductMadeIn,
+                productSize: this.state.newProductSize,
+                productWidth: this.state.newProductWidth === '' ? '' : parseFloat(this.state.newProductWidth),
+                productLength: this.state.newProductLength === '' ? '' : parseFloat(this.state.newProductLength),
+                productColor: this.state.newProductColor,
+                productDescription: this.state.newProductDescription,
+                productDepartment: this.props.deptPassed,
+                imageUrl: this.state.newImageUrlArray,
+                searchKeywords: this.state.newSearchKeywords,
+            })
+            this.setState({ visible: false });
+            message.success([this.state.newProductName] + ' has been added.');
+        }catch{
+            message.error('Please select a department first.')
+        }
     }
     showModal = () => {
         this.setState({
@@ -232,6 +245,22 @@ class ShowCopyModal extends Component {
                         onChange={this.handleChange}
                     />
                     <Input
+                        placeholder={'Product Width (numbers 0-9 only)'}
+                        type='text'
+                        name='newProductWidth'
+                        size='medium'
+                        value={this.state.newpProductWidth}
+                        onChange={this.handleChange}
+                    />
+                    <Input
+                        placeholder={'Product Length/Depth (numbers 0-9 only)'}
+                        type='text'
+                        name='newProductLength'
+                        size='medium'
+                        value={this.state.newProductLength}
+                        onChange={this.handleChange}
+                    />
+                    <Input
                         placeholder='Product Color'
                         type='text'
                         name='newProductColor'
@@ -245,6 +274,14 @@ class ShowCopyModal extends Component {
                         name='newProductMadeIn'
                         size='medium'
                         value={this.state.newProductMadeIn}
+                        onChange={this.handleChange}
+                    />
+                    <Input
+                        placeholder={'Search Keywords'}
+                        type='text'
+                        name='newSearchKeywords'
+                        size='medium'
+                        value={this.state.newSearchKeywords}
                         onChange={this.handleChange}
                     />
                     <TextArea
