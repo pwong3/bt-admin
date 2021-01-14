@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+    Form,
     Input,
     Modal,
     Button,
@@ -8,7 +9,6 @@ import {
 } from 'antd';
 import fire from '../config/fire';
 import AddImage from '../Components/AddImage';
-import noImage from '../noImage.png';
 
 const rootRef = fire.database().ref();
 const deptRef = rootRef.child('Department');
@@ -136,7 +136,7 @@ class ShowUpdateModal extends Component {
             message.info('Please add an image first.')
             return
         }
-        try{
+        try {
             const currItem = this.props.itemPassed;
             const productRef = deptRef.child(this.props.deptPassed);
             productRef.child(currItem.key).update({
@@ -157,7 +157,7 @@ class ShowUpdateModal extends Component {
             })
             message.success([this.state.newProductName] + ' has been updated.')
             this.setState({ visible: false })
-        } catch{
+        } catch {
             message.error('Please select a department first.')
         }
     }
@@ -223,103 +223,134 @@ class ShowUpdateModal extends Component {
                             />
                         </div>
                     }
-                    <Input
-                        placeholder={'Product Series: ' + currItem.productSeries}
-                        type='text'
-                        name='newProductSeries'
-                        size='medium'
-                        value={this.state.newProductSeries}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Brand: ' + currItem.productBrand}
-                        type='text'
-                        name='newProductBrand'
-                        size='medium'
-                        value={this.state.newProductBrand}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Name: ' + currItem.productName}
-                        type='text'
-                        name='newProductName'
-                        size='medium'
-                        value={this.state.newProductName}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Model Number: ' + currItem.productModelNumber}
-                        type='text'
-                        name='newProductModelNumber'
-                        size='medium'
-                        value={this.state.newProductModelNumber}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Material: ' + currItem.productMaterial}
-                        type='text'
-                        name='newProductMaterial'
-                        size='medium'
-                        value={this.state.newProductMaterial}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Size: ' + currItem.productSize}
-                        type='text'
-                        name='newProductSize'
-                        size='medium'
-                        value={this.state.newProductSize}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Width: (numbers 0-9 only)' + currItem.productWidth}
-                        type='text'
-                        name='newProductWidth'
-                        size='medium'
-                        value={this.state.newProductWidth}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Length/Depth: (numbers 0-9 only)' + currItem.productLength}
-                        type='text'
-                        name='newProductLength'
-                        size='medium'
-                        value={this.state.newProductLength}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Color: ' + currItem.productColor}
-                        type='text'
-                        name='newProductColor'
-                        size='medium'
-                        value={this.state.newProductColor}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Made in: ' + currItem.productMadeIn}
-                        type='text'
-                        name='newProductMadeIn'
-                        size='medium'
-                        value={this.state.newProductMadeIn}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Search Keywords: ' + currItem.searchKeywords}
-                        type='text'
-                        name='newSearchKeywords'
-                        size='medium'
-                        value={this.state.newSearchKeywords}
-                        onChange={this.handleChange}
-                    />
-                    <TextArea
-                        rows={6}
-                        placeholder={'Product Description: ' + currItem.productDescription}
-                        type='text'
-                        name='newProductDescription'
-                        size='medium'
-                        value={this.state.newProductDescription}
-                        onChange={this.handleChange}
-                    />
+                    <br />
+                    <Form
+                        labelCol={{ span: 8 }}
+                        wrapperCol={{ span: 16 }}
+                        layout="horizontal"
+                    >
+                        <Form.Item label='Product Brand'>
+                            <Input
+                                placeholder={'Product Brand: ' + currItem.productBrand}
+                                type='text'
+                                name='newProductBrand'
+                                size='medium'
+                                value={this.state.newProductBrand}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Series'>
+                            <Input
+                                placeholder={'Product Series: ' + currItem.productSeries}
+                                type='text'
+                                name='newProductSeries'
+                                size='medium'
+                                value={this.state.newProductSeries}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Name'>
+                            <Input
+                                placeholder={'Product Name: ' + currItem.productName}
+                                type='text'
+                                name='newProductName'
+                                size='medium'
+                                value={this.state.newProductName}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Model#'>
+                            <Input
+                                placeholder={'Model Number: ' + currItem.productModelNumber}
+                                type='text'
+                                name='newProductModelNumber'
+                                size='medium'
+                                value={this.state.newProductModelNumber}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Material'>
+                            <Input
+                                placeholder={'Material: ' + currItem.productMaterial}
+                                type='text'
+                                name='newProductMaterial'
+                                size='medium'
+                                value={this.state.newProductMaterial}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Size'>
+                            <Input
+                                placeholder={'Size: ' + currItem.productSize}
+                                type='text'
+                                name='newProductSize'
+                                size='medium'
+                                value={this.state.newProductSize}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Width'>
+                            <Input
+                                placeholder={'Product Width: (numbers 0-9 only)' + currItem.productWidth}
+                                type='text'
+                                name='newProductWidth'
+                                size='medium'
+                                value={this.state.newProductWidth}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Length/Depth'>
+                            <Input
+                                placeholder={'Product Length/Depth: (numbers 0-9 only)' + currItem.productLength}
+                                type='text'
+                                name='newProductLength'
+                                size='medium'
+                                value={this.state.newProductLength}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Color'>
+                            <Input
+                                placeholder={'Color: ' + currItem.productColor}
+                                type='text'
+                                name='newProductColor'
+                                size='medium'
+                                value={this.state.newProductColor}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Made In'>
+                            <Input
+                                placeholder={'Made in: ' + currItem.productMadeIn}
+                                type='text'
+                                name='newProductMadeIn'
+                                size='medium'
+                                value={this.state.newProductMadeIn}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Search Keywords'>
+                            <Input
+                                placeholder={'Search Keywords: ' + currItem.searchKeywords}
+                                type='text'
+                                name='newSearchKeywords'
+                                size='medium'
+                                value={this.state.newSearchKeywords}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Description'>
+                            <TextArea
+                                rows={6}
+                                placeholder={'Product Description: ' + currItem.productDescription}
+                                type='text'
+                                name='newProductDescription'
+                                size='medium'
+                                value={this.state.newProductDescription}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                    </Form>
                 </Modal>
             </div >
         )

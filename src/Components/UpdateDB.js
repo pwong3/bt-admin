@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Spin, Select, Checkbox, List, Button, Input, message } from 'antd';
+import { Spin, Select, Checkbox, List, Input } from 'antd';
 import fire from '../config/fire';
 import './UpdateDB.css';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -116,12 +116,16 @@ class UpdateDB extends PureComponent {
             })
         }
     }
+
+    //search by product name
     filterBySearch = () => {
         const { productsList } = this.state;
         const copyProdList = productsList;
         const searchList = copyProdList.filter(prod => prod.productName.toLowerCase().includes(this.state.searchValue.toLowerCase()))
         this.setState({ searchedProductsList: searchList })
     }
+
+    //filter by brand name with checkboxes
     filterByBrand = () => {
         const { filterByKey, productsList, searching, searchedProductsList } = this.state;
         const tempProdList = [];
@@ -141,6 +145,7 @@ class UpdateDB extends PureComponent {
             })
         this.setState({ filteredProductsList: tempProdList })
     }
+
     //sort by dropdown
     sortByName = (sortProperty, list) => {
         if (sortProperty === 'productWidth') {
@@ -152,26 +157,30 @@ class UpdateDB extends PureComponent {
         }
     }
 
-    //used to add productWidth and productLength to existing products
-    updateDatabase = () => {
-        const db = this.state.productsList;
-        const productRef = deptRef.child(this.props.deptPassed);
-        db.forEach((item) => {
-            let keywords = '';
-            console.log(item.productBrand.toLowerCase())
-            keywords = keywords.concat(item.productBrand.toLowerCase())
-                .concat(', ', item.productDepartment.toLowerCase())
-                .concat(', ', item.productMaterial.toLowerCase())
-                .concat(', ', item.productColor.toLowerCase())
-                .concat(', ', item.productModelNumber.toLowerCase())
-            console.log(keywords)
-            productRef.child(item.key).update({
-                searchKeywords: keywords,
-            })
+    ////used to add new fields to existing database
+    // updateDatabase = () => {
+    //     const db = this.state.productsList;
+    //     const productRef = deptRef.child(this.props.deptPassed);
+    //     db.forEach((item) => {
+    //         let keywords = '';
+    //         console.log(item.productBrand.toLowerCase())
+    //         keywords = keywords
+    //             // .concat(item.productBrand.toLowerCase())
+    //             .concat(' ', item.productDepartment.toLowerCase())
+    //             .concat(' ', item.productName.toLowerCase())
+    //             .concat(' ', item.productMaterial.toLowerCase())
+    //             .concat(' ', item.productColor.toLowerCase())
+    //             .concat(' ', item.productModelNumber.toLowerCase())
+    //             .concat(' ', item.productSize.toLowerCase())
+    //             .concat(' ', item.productWidth,'x',item.productLength)
+    //         console.log(keywords)
+    //         productRef.child(item.key).update({
+    //             searchKeywords: keywords,
+    //         })
 
-            message.success(item.productName + 'updated')
-        })
-    }
+    //         message.success(item.productName + 'updated')
+    //     })
+    // }
 
     render() {
         const { Option } = Select;
@@ -271,11 +280,12 @@ class UpdateDB extends PureComponent {
                 <div>
                     <br />
                     <div>
-                        <Button
+                        {/*----- Button to update database -----*/}
+                        {/* <Button
                             type='primary'
                             onClick={this.updateDatabase}>
                             update database
-                        </Button>
+                        </Button> */}
                     </div>
                     {this.state.isLoading ?
                         <div style={{ textAlign: 'center' }}>

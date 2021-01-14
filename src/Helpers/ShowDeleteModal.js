@@ -5,7 +5,6 @@ import {
 } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import fire from '../config/fire';
-import noImage from '../noImage.png';
 
 const { confirm } = Modal;
 const storage = fire.storage();

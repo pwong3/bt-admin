@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import {
+    Form,
     Input,
     Modal,
     Button,
     message,
     Space,
-    Progress,
 } from 'antd';
 import fire from '../config/fire';
 import AddImage from '../Components/AddImage';
@@ -22,6 +22,9 @@ class ShowCopyModal extends Component {
         this.addOnPress = this.addOnPress.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.setProgress = this.setProgress.bind(this);
+        this.deleteImage = this.deleteImage.bind(this);
+        this.fileHandleChange = this.fileHandleChange.bind(this);
+        this.fileHandleUpload = this.fileHandleUpload.bind(this);
         this.state = {
             sortKey: '',
             newProductSeries: '',
@@ -64,7 +67,7 @@ class ShowCopyModal extends Component {
             newProductColor: currItem.productColor,
             newProductMadeIn: currItem.productMadeIn,
             newProductDescription: currItem.productDescription,
-            newSearchKeywords: currItem.searchKeywords,
+            newSearchKeywords: '',
         });
     }
     handleChange = (e) => {
@@ -76,6 +79,30 @@ class ShowCopyModal extends Component {
     }
     setProgress = (progress) => {
         this.setState({ progressValue: progress });
+    }
+    deleteImage = (deleteIndex) => {
+        if (this.state.newImageUrlArray.length === 1) {
+            message.info('Please upload another image before deleting this one.')
+            return
+        }
+        if (this.state.newImageUrlArray[deleteIndex].url === noImage) {
+            const copy = [...this.state.newImageUrlArray]
+            copy.splice(deleteIndex, 1)
+            this.setState({
+                newImageUrlArray: copy,
+            })
+        }
+        else {
+            const copy = [...this.state.newImageUrlArray]
+            copy.splice(deleteIndex, 1)
+            const deleteRef = storage.refFromURL(this.state.newImageUrlArray[deleteIndex].url);
+            deleteRef.delete()
+                .then(
+                    this.setState({
+                        newImageUrlArray: copy,
+                        progressValue: 0
+                    }))
+        }
     }
     fileHandleUpload = () => {
         if (this.state.imageFile === '') {
@@ -108,11 +135,36 @@ class ShowCopyModal extends Component {
         )
     }
     addOnPress = () => {
-        if (this.state.newImageUrlArray.length === 0) {
-            message.info('Please add an image first.')
-            return
+        // if (this.state.newImageUrlArray.length === 0) {
+        //     message.info('Please add an image first.')
+        //     return
+        // }
+        let keywords = ''
+        if (this.props.deptPassed === 'Tiles') {
+            keywords = keywords
+                .concat(' ', this.state.newProductSeries.toLowerCase())
+                .concat(' ', this.state.newProductName.toLowerCase())
+                .concat(' ', this.state.newProductModelNumber.toLowerCase())
+                .concat(' ', this.state.newProductMaterial.toLowerCase())
+                .concat(' ', this.state.newProductColor.toLowerCase())
+                .concat(' ', this.state.newProductSize.toLowerCase())
+                .concat(' ', this.state.newProductWidth, 'x', this.state.newProductLength)
+                .concat(' ', this.state.newProductColor.toLowerCase())
+                .concat(' ', this.props.deptPassed.toLowerCase())
+        } else {
+            keywords = keywords
+                .concat(' ', this.state.newProductBrand.toLowerCase())
+                .concat(' ', this.state.newProductSeries.toLowerCase())
+                .concat(' ', this.state.newProductName.toLowerCase())
+                .concat(' ', this.state.newProductModelNumber.toLowerCase())
+                .concat(' ', this.state.newProductMaterial.toLowerCase())
+                .concat(' ', this.state.newProductColor.toLowerCase())
+                .concat(' ', this.state.newProductSize.toLowerCase())
+                .concat(' ', this.state.newProductWidth, 'x', this.state.newProductLength)
+                .concat(' ', this.state.newProductColor.toLowerCase())
+                .concat(' ', this.props.deptPassed.toLowerCase())
         }
-        try{
+        try {
             const productRef = deptRef.child(this.props.deptPassed);
             productRef.push({
                 sortKey: -1 * Date.now(),
@@ -129,11 +181,11 @@ class ShowCopyModal extends Component {
                 productDescription: this.state.newProductDescription,
                 productDepartment: this.props.deptPassed,
                 imageUrl: this.state.newImageUrlArray,
-                searchKeywords: this.state.newSearchKeywords,
+                searchKeywords: keywords,
             })
             this.setState({ visible: false });
             message.success([this.state.newProductName] + ' has been added.');
-        }catch{
+        } catch {
             message.error('Please select a department first.')
         }
     }
@@ -196,103 +248,134 @@ class ShowCopyModal extends Component {
                             />
                         </div>
                     }
-                    <Input
-                        placeholder='Product Series'
-                        type='text'
-                        name='newProductSeries'
-                        size='medium'
-                        value={this.state.newProductSeries}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Brand'
-                        type='text'
-                        name='newProductBrand'
-                        size='medium'
-                        value={this.state.newProductBrand}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Name'
-                        type='text'
-                        name='newProductName'
-                        size='medium'
-                        value={this.state.newProductName}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Model Number'
-                        type='text'
-                        name='newProductModelNumber'
-                        size='medium'
-                        value={this.state.newProductModelNumber}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Material'
-                        type='text'
-                        name='newProductMaterial'
-                        size='medium'
-                        value={this.state.newProductMaterial}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Size'
-                        type='text'
-                        name='newProductSize'
-                        size='medium'
-                        value={this.state.newProductSize}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Width (numbers 0-9 only)'}
-                        type='text'
-                        name='newProductWidth'
-                        size='medium'
-                        value={this.state.newpProductWidth}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Product Length/Depth (numbers 0-9 only)'}
-                        type='text'
-                        name='newProductLength'
-                        size='medium'
-                        value={this.state.newProductLength}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Color'
-                        type='text'
-                        name='newProductColor'
-                        size='medium'
-                        value={this.state.newProductColor}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder='Product Made In'
-                        type='text'
-                        name='newProductMadeIn'
-                        size='medium'
-                        value={this.state.newProductMadeIn}
-                        onChange={this.handleChange}
-                    />
-                    <Input
-                        placeholder={'Search Keywords'}
-                        type='text'
-                        name='newSearchKeywords'
-                        size='medium'
-                        value={this.state.newSearchKeywords}
-                        onChange={this.handleChange}
-                    />
-                    <TextArea
-                        rows={6}
-                        placeholder={'Product Description'}
-                        type='text'
-                        name='newProductDescription'
-                        size='medium'
-                        value={this.state.newProductDescription}
-                        onChange={this.handleChange}
-                    />
+                    <br />
+                    <Form
+                        labelCol={{ span: 8 }}
+                        wrapperCol={{ span: 16 }}
+                        layout="horizontal"
+                    >
+                        <Form.Item label='Product Brand'>
+                            <Input
+                                placeholder='Product Brand'
+                                type='text'
+                                name='newProductBrand'
+                                size='medium'
+                                value={this.state.newProductBrand}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Series'>
+                            <Input
+                                placeholder='Product Series'
+                                type='text'
+                                name='newProductSeries'
+                                size='medium'
+                                value={this.state.newProductSeries}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Name'>
+                            <Input
+                                placeholder='Product Name'
+                                type='text'
+                                name='newProductName'
+                                size='medium'
+                                value={this.state.newProductName}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Model#'>
+                            <Input
+                                placeholder='Product Model Number'
+                                type='text'
+                                name='newProductModelNumber'
+                                size='medium'
+                                value={this.state.newProductModelNumber}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Material'>
+                            <Input
+                                placeholder='Product Material'
+                                type='text'
+                                name='newProductMaterial'
+                                size='medium'
+                                value={this.state.newProductMaterial}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Size'>
+                            <Input
+                                placeholder='Product Size'
+                                type='text'
+                                name='newProductSize'
+                                size='medium'
+                                value={this.state.newProductSize}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Width'>
+                            <Input
+                                placeholder='Product Width (numbers 0-9 only)'
+                                type='text'
+                                name='newProductWidth'
+                                size='medium'
+                                value={this.state.newProductWidth}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Length/Depth'>
+                            <Input
+                                placeholder='Product Length/Depth (numbers 0-9 only)'
+                                type='text'
+                                name='newProductLength'
+                                size='medium'
+                                value={this.state.newProductLength}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Color'>
+                            <Input
+                                placeholder='Product Color'
+                                type='text'
+                                name='newProductColor'
+                                size='medium'
+                                value={this.state.newProductColor}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Made In'>
+                            <Input
+                                placeholder='Product Made In'
+                                type='text'
+                                name='newProductMadeIn'
+                                size='medium'
+                                value={this.state.newProductMadeIn}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Search Keywords'>
+                            <Input
+                                placeholder={'Search Keywords'}
+                                type='text'
+                                name='newSearchKeywords'
+                                size='medium'
+                                value={this.state.newSearchKeywords}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                        <Form.Item label='Product Description'>
+                            <TextArea
+                                rows={6}
+                                placeholder={'Product Description (must fill in)'}
+                                type='text'
+                                name='newProductDescription'
+                                size='medium'
+                                value={this.state.newProductDescription}
+                                onChange={this.handleChange}
+                            />
+                        </Form.Item>
+                    </Form>
                 </Modal>
             </div >
         )

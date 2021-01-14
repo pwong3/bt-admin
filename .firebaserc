@@ -7,5 +7,8 @@
         ]
       }
     }
+  },
+  "projects": {
+    "deploy": "besttile-a546b"
   }
 }
